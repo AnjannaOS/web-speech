@@ -1,0 +1,61 @@
+<h1>Speech color changer</h1>
+<p>Tap/click and then say a color to change the background color of the app</p>
+<div>
+    <p class="output"><em>...diagnostic message</em></p>
+    <p class="hints"><em>...hint message</em></p>
+</div>
+
+<script>
+    var SpeechRecognition = window.speechRecognition || webkitSpeechRecognition;
+    var SpeechGrammarList = window.speechGrammarList || webkitSpeechGrammarList;
+    var SpeechRecognitionEvent = window.SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
+
+    var colors = ['aqua', 'azure', 'blue', 'black', 'brown', 'green', 'chocolate', 'coral']
+    var grammar = '#JSGF V1.0; grammar colors; public <color> = ' + colors.join(' | ') + ';'
+
+    var recognition = new SpeechRecognition();
+    var speechRecognitionList = new SpeechGrammarList();
+    speechRecognitionList.addFromString(grammar, 1);
+    recognition.grammars = speechRecognitionList;
+    recognition.continuous = false;
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    var diagnostics = document.querySelector('.output');
+    var bg = document.querySelector('html');
+    var hints = document.querySelector('.hints');
+
+    var colorHTML = '';
+    colors.forEach(function(v, i, a){
+        console.log(v, i);
+        colorHTML += '<span style="background-color:' + v + ';">' + v + '</span>';
+    });
+    hints.innerHTML = 'Tap/click and then say a color to change the background color of the app. Try '+colorHTML+'.';
+
+    document.body.onclick = function(){
+        recognition.start();
+        console.log("ready to receive color command");
+    }
+
+    recognition.onresult = function(event) {
+        var color = event.results[0][0].transcript;
+        console.log("input voice");
+        console.log(color);
+        diagnostics.textContent = 'Result received: ' + color + '.';
+        bg.style.backgroundColor = color;
+        console.log('Confidence: '+ event.results[0][0].confidence);
+    }
+
+    recognition.onspeechend = function() {
+        recognition.stop();
+    }
+
+    recognition.onnomatch = function(event) {
+        diagnostics.textContent = "I didnt recognise that color";
+    }
+
+    recognition.onerror = function(event) {
+        diagnostics.textContent = "Error occured in recognition: " + event.error;
+    }
+</script>
